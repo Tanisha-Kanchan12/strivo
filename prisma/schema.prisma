@@ -1,0 +1,1107 @@
+// Strivo — complete database schema
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserStatus {
+  SCHOOL
+  COLLEGE
+  ASPIRANT
+}
+
+enum StudyGoal {
+  JEE
+  NEET
+  SSC_CGL
+  SSC_CHSL
+  UPSC
+  CAT
+  CUET
+  GATE
+  BANK_PO_CLERK
+  RRB_NTPC
+  BOARD_EXAMS
+  COLLEGE_EXAMS
+  MBA_ENTRANCE
+  PLACEMENT_PREP
+  PRODUCT_MANAGEMENT
+  DATA_SCIENCE
+  CONSULTING
+  OTHER
+}
+
+enum StudyTime {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum PartnerType {
+  ACCOUNTABILITY
+  ACTIVE_BUDDY
+  EITHER
+}
+
+enum ProfileVisibility {
+  OPEN
+  MATCH_ONLY
+  PRIVATE
+}
+
+enum MatchStatus {
+  PENDING
+  CONNECTED
+  SKIPPED
+  EXPIRED
+}
+
+enum PairRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum SessionPlatform {
+  GOOGLE_MEET
+  IN_PERSON
+}
+
+enum NotificationType {
+  STREAK_UPDATE
+  SESSION_REMINDER
+  NEW_MATCH
+  CONNECT_ACCEPTED
+  CONNECT_EXPIRED
+  SHIELD_USED
+  NEW_MESSAGE
+  STUDYING_NOW_PROMPT
+  INDIVIDUAL_STREAK_MILESTONE
+  AI_NUDGE
+  HACKATHON_APPLICATION
+  LIVE_NOW
+  FEED_ACTIVITY
+  SYLLABUS_SHARED
+  WEEKLY_GOAL_REMINDER
+  WEEKLY_GOAL_RECAP
+  MENTOR_REQUEST
+  MENTOR_REQUEST_RESPONSE
+  GROUP_MESSAGE
+}
+
+enum FeedPostType {
+  ACHIEVEMENT
+  DOUBT
+  KNOWLEDGE
+}
+
+enum MentorRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum GroupFocusStatus {
+  IDLE
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+enum BadgeType {
+  GOAL_SETTER
+  CONSISTENT
+  GOOD_PARTNER
+  VETERAN
+  PLANNER
+  VERIFIED_STUDENT
+  COMMUNITY_BUILDER
+}
+
+enum FeedbackType {
+  BUG
+  FEATURE_REQUEST
+  GENERAL
+  PROBLEM
+  SUPPORT
+}
+
+enum FeedbackStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  STUDYING_ALONE
+  NOT_AVAILABLE
+  AVAILABLE_AT
+}
+
+enum LiveNowTopic {
+  PM_CASE
+  CONSULTING
+  MOCK_INTERVIEW
+  GD_PRACTICE
+  HACKATHON
+}
+
+enum HackathonRole {
+  DEVELOPER
+  DESIGNER
+  PM
+  OTHER
+}
+
+enum PairSource {
+  MATCH
+  LIVE_NOW
+  HACKATHON
+}
+
+enum HackathonApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum StreakType {
+  INDIVIDUAL
+  PAIR
+}
+
+enum StreakEventType {
+  DAILY_TARGET
+  FOCUS_SESSION
+  CHAT_MESSAGES
+  CHECKIN
+  STUDYING_NOW
+  MOCK_SESSION
+}
+
+// ─── Core User ───────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  name      String?
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile                Profile?
+  onboarding             Onboarding?
+  settings               UserSettings?
+  subjects               Subject[]
+  sentMatches            Match[]                @relation("SentMatches")
+  receivedMatches        Match[]                @relation("ReceivedMatches")
+  sentPairRequests       PairRequest[]          @relation("SentPairRequests")
+  receivedPairRequests   PairRequest[]          @relation("ReceivedPairRequests")
+  pairsAsUser1           ConnectedPair[]        @relation("PairUser1")
+  pairsAsUser2           ConnectedPair[]        @relation("PairUser2")
+  dailyTargets           DailyTarget[]
+  checkins               Checkin[]
+  studyingNowResponses   StudyingNowResponse[]
+  focusSessionsAsUser1   FocusSession[]         @relation("FocusUser1")
+  focusSessionsAsUser2   FocusSession[]         @relation("FocusUser2")
+  sentMessages           Message[]              @relation("SentMessages")
+  receivedMessages       Message[]              @relation("ReceivedMessages")
+  notifications          Notification[]
+  individualStreak       IndividualStreak?
+  badges                 Badge[]
+  liveNowSessions        LiveNowSession[]
+  hackathonPosts         HackathonPost[]
+  hackathonApplications  HackathonApplication[]
+  aiConversations        AiConversation[]
+  monthlyRecaps          MonthlyRecap[]
+  blocksInitiated        Block[]                @relation("BlocksInitiated")
+  blocksReceived         Block[]                @relation("BlocksReceived")
+  reportsInitiated       Report[]               @relation("ReportsInitiated")
+  reportsReceived        Report[]               @relation("ReportsReceived")
+  sessionRatingsGiven    SessionRating[]        @relation("RatingsGiven")
+  sessionRatingsReceived SessionRating[]        @relation("RatingsReceived")
+  pairInsights           PairInsight[]
+  feedback               Feedback[]
+  availability           UserAvailability?
+  studyGoals               StudyGoalProgress[]
+  referralsMade            Referral[]             @relation("ReferralsMade")
+  referralReceived         Referral?              @relation("ReferralReceived")
+  pairNotesEdited          PairNote[]             @relation("PairNotesEdited")
+  feedPosts                FeedPost[]
+  feedPostLikes            FeedPostLike[]
+  feedPostComments         FeedPostComment[]
+  createdGroups            StudyGroup[]           @relation("GroupCreator")
+  groupMemberships         StudyGroupMember[]
+  groupMessages            StudyGroupMessage[]
+  groupTargets             StudyGroupTarget[]
+  mentorProfile            MentorProfile?
+  mentorRequestsSent       MentorSessionRequest[] @relation("MentorRequestsSent")
+  mentorRequestsReceived   MentorSessionRequest[] @relation("MentorRequestsReceived")
+  syllabusTopics           SyllabusTopic[]
+  scoreLogs                ScoreLog[]
+  studyPlans               StudyPlan[]
+  planTasks                PlanTask[]
+  weeklyGoals              WeeklyGoal[]
+  customFilters            UserCustomFilter[]
+
+  @@index([clerkId])
+  @@index([email])
+  @@map("users")
+}
+
+model Profile {
+  id            String            @id @default(cuid())
+  userId        String            @unique
+  bio           String?
+  city          String?
+  college       String?
+  stream        String?
+  profilePicUrl String?
+  isVerified    Boolean           @default(false)
+  visibility    ProfileVisibility @default(OPEN)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([city])
+  @@map("profiles")
+}
+
+model UserSettings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  cityMode               Boolean  @default(false)
+  locationAccess         Boolean  @default(false)
+  girlsOnlyMode          Boolean  @default(false)
+  language               String   @default("en")
+  notifyStreakUpdates    Boolean  @default(true)
+  notifySessionReminders Boolean  @default(true)
+  notifyNewMatches       Boolean  @default(true)
+  notifyConnectAccepted  Boolean  @default(true)
+  notifyConnectExpired   Boolean  @default(true)
+  notifyShieldUsed       Boolean  @default(true)
+  notifyNewMessages      Boolean  @default(true)
+  notifyStudyingNow      Boolean  @default(true)
+  notifyStreakMilestones Boolean  @default(true)
+  notifyAiNudge          Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_settings")
+}
+
+model Onboarding {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  status      UserStatus?
+  goal        StudyGoal?
+  field       String?
+  studyTimes  Json             @default("[]")
+  partnerType PartnerType?
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([goal])
+  @@map("onboarding")
+}
+
+model Subject {
+  id          String @id @default(cuid())
+  userId      String
+  subjectName String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("subjects")
+}
+
+// ─── Matching ────────────────────────────────────────────────────────────────
+
+model Match {
+  id            String      @id @default(cuid())
+  userId        String
+  matchedUserId String
+  matchScore    Float
+  reasonText    String?
+  status        MatchStatus @default(PENDING)
+  createdAt     DateTime    @default(now())
+  expiresAt     DateTime?
+
+  user        User @relation("SentMatches", fields: [userId], references: [id], onDelete: Cascade)
+  matchedUser User @relation("ReceivedMatches", fields: [matchedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchedUserId])
+  @@index([userId])
+  @@index([matchedUserId])
+  @@index([status])
+  @@map("matches")
+}
+
+model PairRequest {
+  id         String            @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     PairRequestStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  expiresAt  DateTime
+
+  sender   User @relation("SentPairRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedPairRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+  @@map("pair_requests")
+}
+
+model ConnectedPair {
+  id            String     @id @default(cuid())
+  user1Id       String
+  user2Id       String
+  source        PairSource @default(MATCH)
+  isProvisional Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+
+  user1                User                  @relation("PairUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2                User                  @relation("PairUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  dailyTargets         DailyTarget[]
+  checkins             Checkin[]
+  studyingNowResponses StudyingNowResponse[]
+  focusSessions        FocusSession[]
+  sessionSchedules     SessionSchedule[]
+  messages             Message[]
+  pairStreak           PairStreak?
+  streakEvents         StreakEvent[]         @relation("PairStreakEvents")
+  pairInsights         PairInsight[]
+  notes                PairNote?
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@map("connected_pairs")
+}
+
+// ─── Study Board ─────────────────────────────────────────────────────────────
+
+model DailyTarget {
+  id         String   @id @default(cuid())
+  pairId     String
+  userId     String
+  task       String
+  isComplete Boolean  @default(false)
+  date       DateTime 
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([pairId, date])
+  @@index([userId])
+  @@map("daily_targets")
+}
+
+model Checkin {
+  id        String   @id @default(cuid())
+  pairId    String
+  userId    String
+  date      DateTime 
+  completed Boolean
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, userId, date])
+  @@index([pairId])
+  @@index([userId])
+  @@map("checkins")
+}
+
+model StudyingNowResponse {
+  id       String   @id @default(cuid())
+  pairId   String
+  userId   String
+  date     DateTime 
+  response Boolean
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, userId, date])
+  @@index([pairId])
+  @@index([userId])
+  @@map("studying_now_responses")
+}
+
+// ─── Sessions ────────────────────────────────────────────────────────────────
+
+model FocusSession {
+  id              String    @id @default(cuid())
+  pairId          String?
+  user1Id         String
+  user2Id         String?
+  startedAt       DateTime  @default(now())
+  endedAt         DateTime?
+  durationMinutes Int?
+  isComplete      Boolean   @default(false)
+
+  pair    ConnectedPair?  @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user1   User            @relation("FocusUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2   User?           @relation("FocusUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+  ratings SessionRating[]
+
+  @@index([pairId])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@map("focus_sessions")
+}
+
+model SessionRating {
+  id           String @id @default(cuid())
+  sessionId    String
+  ratingUserId String
+  ratedUserId  String
+  stars        Int
+
+  session    FocusSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  ratingUser User         @relation("RatingsGiven", fields: [ratingUserId], references: [id], onDelete: Cascade)
+  ratedUser  User         @relation("RatingsReceived", fields: [ratedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, ratingUserId])
+  @@index([ratedUserId])
+  @@map("session_ratings")
+}
+
+model SessionSchedule {
+  id              String          @id @default(cuid())
+  pairId          String
+  scheduledAt     DateTime
+  durationMinutes Int
+  platform        SessionPlatform
+  meetLink        String?
+  location        String?
+  createdAt       DateTime        @default(now())
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([pairId])
+  @@index([scheduledAt])
+  @@map("session_schedules")
+}
+
+// ─── Chat ────────────────────────────────────────────────────────────────────
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  pairId     String?
+  content    String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+
+  sender   User           @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User           @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  pair     ConnectedPair? @relation(fields: [pairId], references: [id], onDelete: SetNull)
+
+  @@index([pairId, createdAt])
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("messages")
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  content   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─── Streaks ─────────────────────────────────────────────────────────────────
+
+model IndividualStreak {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime? 
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("individual_streaks")
+}
+
+model PairStreak {
+  id               String    @id @default(cuid())
+  pairId           String    @unique
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastSharedDate   DateTime? 
+  shieldsRemaining Int       @default(2)
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([pairId])
+  @@map("pair_streaks")
+}
+
+model StreakEvent {
+  id          String          @id @default(cuid())
+  streakType  StreakType
+  referenceId String
+  pairId      String?
+  eventDate   DateTime        
+  eventType   StreakEventType
+  createdAt   DateTime        @default(now())
+
+  pair ConnectedPair? @relation("PairStreakEvents", fields: [pairId], references: [id], onDelete: Cascade)
+
+  @@index([referenceId, eventDate])
+  @@index([pairId, eventDate])
+  @@map("streak_events")
+}
+
+// ─── Badges ──────────────────────────────────────────────────────────────────
+
+model Badge {
+  id        String    @id @default(cuid())
+  userId    String
+  badgeType BadgeType
+  earnedAt  DateTime  @default(now())
+  isVisible Boolean   @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeType])
+  @@index([userId])
+  @@map("badges")
+}
+
+// ─── Live Now ────────────────────────────────────────────────────────────────
+
+model LiveNowSession {
+  id            String       @id @default(cuid())
+  userId        String
+  topic         LiveNowTopic
+  startedAt     DateTime     @default(now())
+  autoExpiresAt DateTime
+  isActive      Boolean      @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive, autoExpiresAt])
+  @@map("live_now_sessions")
+}
+
+// ─── Hackathon ─────────────────────────────────────────────────────────────────
+
+model HackathonPost {
+  id             String          @id @default(cuid())
+  userId         String
+  hackathonName  String
+  rolesNeeded    Json             @default("[]")
+  cityPreference String?
+  deadline       DateTime        
+  isOpen         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications HackathonApplication[]
+
+  @@index([userId])
+  @@index([isOpen])
+  @@map("hackathon_posts")
+}
+
+model HackathonApplication {
+  id          String                     @id @default(cuid())
+  postId      String
+  applicantId String
+  status      HackathonApplicationStatus @default(PENDING)
+  createdAt   DateTime                   @default(now())
+
+  post      HackathonPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  applicant User          @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, applicantId])
+  @@index([postId])
+  @@index([applicantId])
+  @@map("hackathon_applications")
+}
+
+// ─── AI ──────────────────────────────────────────────────────────────────────
+
+model AiConversation {
+  id        String   @id @default(cuid())
+  userId    String
+  messages  Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("ai_conversations")
+}
+
+model PairInsight {
+  id        String   @id @default(cuid())
+  pairId    String
+  userId    String
+  weekStart DateTime 
+  content   String
+  createdAt DateTime @default(now())
+
+  pair ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pairId, userId, weekStart])
+  @@index([userId])
+  @@map("pair_insights")
+}
+
+model MonthlyRecap {
+  id               String   @id @default(cuid())
+  userId           String
+  month            Int
+  year             Int
+  sessionsCount    Int      @default(0)
+  longestStreak    Int      @default(0)
+  connectionsCount Int      @default(0)
+  topSubject       String?
+  summaryText      String?
+  generatedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@map("monthly_recaps")
+}
+
+// ─── Privacy ─────────────────────────────────────────────────────────────────
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("BlocksInitiated", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String
+  reportedId String
+  reason     String
+  createdAt  DateTime @default(now())
+
+  reporter User @relation("ReportsInitiated", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported User @relation("ReportsReceived", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([reportedId])
+  @@map("reports")
+}
+
+// ─── Feedback & Support ────────────────────────────────────────────────────────
+
+model Feedback {
+  id            String         @id @default(cuid())
+  userId        String
+  type          FeedbackType
+  message       String
+  screenshotUrl String?
+  status        FeedbackStatus @default(OPEN)
+  createdAt     DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("feedback")
+}
+
+// ─── Availability ────────────────────────────────────────────────────────────
+
+model UserAvailability {
+  id          String             @id @default(cuid())
+  userId      String             @unique
+  status      AvailabilityStatus @default(AVAILABLE)
+  availableAt DateTime?
+  updatedAt   DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_availability")
+}
+
+// ─── Study Goals ─────────────────────────────────────────────────────────────
+
+model StudyGoalProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  title           String
+  targetNumber    Int
+  currentProgress Int       @default(0)
+  deadline        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("study_goal_progress")
+}
+
+// ─── Pair Notes ──────────────────────────────────────────────────────────────
+
+model PairNote {
+  id             String   @id @default(cuid())
+  pairId         String   @unique
+  content        String   @default("")
+  lastEditedById String?
+  updatedAt      DateTime @updatedAt
+
+  pair         ConnectedPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+  lastEditedBy User?         @relation("PairNotesEdited", fields: [lastEditedById], references: [id], onDelete: SetNull)
+
+  @@index([pairId])
+  @@map("pair_notes")
+}
+
+// ─── Referrals ───────────────────────────────────────────────────────────────
+
+model Referral {
+  id                  String   @id @default(cuid())
+  referrerId          String
+  referredUserId      String   @unique
+  completedOnboarding Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  referrer User @relation("ReferralsMade", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("ReferralReceived", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+// ─── Feed ────────────────────────────────────────────────────────────────────
+
+model UserCustomFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, label])
+  @@index([userId])
+  @@map("user_custom_filters")
+}
+
+model FeedPost {
+  id          String       @id @default(cuid())
+  userId      String
+  type        FeedPostType
+  content     String
+  goal        StudyGoal
+  imageUrl    String?
+  pdfUrl      String?
+  pdfFileName String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes    FeedPostLike[]
+  comments FeedPostComment[]
+
+  @@index([userId])
+  @@index([goal, createdAt])
+  @@index([createdAt])
+  @@map("feed_posts")
+}
+
+model FeedPostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("feed_post_likes")
+}
+
+model FeedPostComment {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  post FeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([userId])
+  @@map("feed_post_comments")
+}
+
+// ─── Study Groups ────────────────────────────────────────────────────────────
+
+model StudyGroup {
+  id        String    @id @default(cuid())
+  name      String
+  goal      StudyGoal
+  subject   String
+  creatorId String
+  maxMembers Int      @default(5)
+  createdAt DateTime  @default(now())
+
+  creator      User               @relation("GroupCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  members      StudyGroupMember[]
+  messages     StudyGroupMessage[]
+  targets      StudyGroupTarget[]
+  focusSession GroupFocusSession?
+
+  @@index([creatorId])
+  @@index([goal])
+  @@map("study_groups")
+}
+
+model StudyGroupMember {
+  id       String   @id @default(cuid())
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+  @@map("study_group_members")
+}
+
+model StudyGroupMessage {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, createdAt])
+  @@index([userId])
+  @@map("study_group_messages")
+}
+
+model StudyGroupTarget {
+  id         String   @id @default(cuid())
+  groupId    String
+  userId     String
+  task       String
+  date       DateTime
+  isComplete Boolean  @default(false)
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([groupId, date])
+  @@index([userId])
+  @@map("study_group_targets")
+}
+
+model GroupFocusSession {
+  id              String           @id @default(cuid())
+  groupId         String           @unique
+  durationMinutes Int              @default(25)
+  startedAt       DateTime?
+  endsAt          DateTime?
+  status          GroupFocusStatus @default(IDLE)
+  startedById     String?
+
+  group StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@map("group_focus_sessions")
+}
+
+// ─── Mentors ─────────────────────────────────────────────────────────────────
+
+model MentorProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  isMentor         Boolean  @default(false)
+  achievementBadge String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isMentor])
+  @@map("mentor_profiles")
+}
+
+model MentorSessionRequest {
+  id        String              @id @default(cuid())
+  studentId String
+  mentorId  String
+  message   String?
+  status    MentorRequestStatus @default(PENDING)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  student User @relation("MentorRequestsSent", fields: [studentId], references: [id], onDelete: Cascade)
+  mentor  User @relation("MentorRequestsReceived", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@index([mentorId, status])
+  @@map("mentor_session_requests")
+}
+
+// ─── Syllabus Tracker ────────────────────────────────────────────────────────
+
+model SyllabusTopic {
+  id          String    @id @default(cuid())
+  userId      String
+  goal        StudyGoal
+  subject     String
+  topicName   String
+  isComplete  Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, goal])
+  @@index([userId, subject])
+  @@map("syllabus_topics")
+}
+
+// ─── Mock Test Scores ────────────────────────────────────────────────────────
+
+model ScoreLog {
+  id            String   @id @default(cuid())
+  userId        String
+  testName      String
+  date          DateTime
+  score         Float
+  maxScore      Float
+  subject       String
+  notes         String?
+  sharedWithPair Boolean @default(false)
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, subject])
+  @@map("score_logs")
+}
+
+// ─── Study Planner ───────────────────────────────────────────────────────────
+
+model StudyPlan {
+  id               String   @id @default(cuid())
+  userId           String
+  examName         String
+  examDate         DateTime
+  dailyHoursTarget Float
+  subjects         Json     @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks PlanTask[]
+
+  @@index([userId])
+  @@map("study_plans")
+}
+
+model PlanTask {
+  id        String    @id @default(cuid())
+  planId    String
+  userId    String
+  date      DateTime
+  taskText  String
+  subject   String
+  isComplete Boolean  @default(false)
+  skippedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  plan StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([planId, date])
+  @@index([userId, date])
+  @@map("plan_tasks")
+}
+
+// ─── Weekly Goals ────────────────────────────────────────────────────────────
+
+model WeeklyGoal {
+  id          String    @id @default(cuid())
+  userId      String
+  weekStart   DateTime
+  goalText    String
+  isComplete  Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, weekStart])
+  @@map("weekly_goals")
+}
