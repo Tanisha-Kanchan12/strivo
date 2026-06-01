@@ -5,12 +5,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
+import { AuthDivider } from "@/components/auth/auth-divider";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function LoginForm() {
+type LoginFormProps = {
+  googleEnabled?: boolean;
+};
+
+export function LoginForm({ googleEnabled = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -49,6 +55,14 @@ export function LoginForm() {
           <h2 className="text-2xl font-bold text-strivo-text">Welcome back</h2>
           <p className="mt-1 text-sm text-strivo-secondary">Sign in to your account</p>
         </div>
+
+        {googleEnabled ? (
+          <>
+            <GoogleSignInButton />
+            <AuthDivider />
+          </>
+        ) : null}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
