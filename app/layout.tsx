@@ -1,11 +1,7 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
-import {
-  clerkLocalization,
-  strivoClerkAppearance,
-} from "@/lib/clerk-appearance";
+import { AuthSessionProvider } from "@/components/providers/session-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,14 +32,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={strivoClerkAppearance}
-      localization={clerkLocalization}
-    >
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-strivo-page font-sans antialiased`}
-        >
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-strivo-page font-sans antialiased`}
+      >
+        <AuthSessionProvider>
           {children}
           <Toaster
             position="top-center"
@@ -53,8 +46,8 @@ export default function RootLayout({
               },
             }}
           />
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthSessionProvider>
+      </body>
+    </html>
   );
 }

@@ -1,5 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { ProtectedShell } from "@/components/layout/protected-shell";
 import { requireDbUser } from "@/lib/auth";
 import { isOnboardingComplete } from "@/lib/user";
@@ -9,8 +9,8 @@ export default async function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth();
+  if (!session?.user?.id) {
     redirect("/login");
   }
 

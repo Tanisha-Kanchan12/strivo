@@ -1,72 +1,42 @@
-import { auth as clerkAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { auth } from "@/auth";
 import { getPusherServer } from "@/lib/pusher-server";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { userId: clerkId } = await clerkAuth();
-    if (!clerkId) {
+    const session = await auth();
+    const userId = session?.user?.id;
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
-      where: { clerkId },
+      where: { id: userId },
       select: { id: true },
     });
-
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.text();
-    const params = new URLSearchParams(body);
-    const socketId = params.get("socket_id");
-    const channelName = params.get("channel_name");
+    const formData = await request.formData();
+    const socketId = formData.get("socket_id") as string;
+    const channel = formData.get("channel_name") as string;
 
-    if (!socketId || !channelName) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    if (!socketId || !channel) {
+      return NextResponse.json({ error: "Missing socket_id or channel_name" }, { status: 400 });
     }
 
     const pusher = getPusherServer();
     if (!pusher) {
-      return NextResponse.json(
-        { error: "Pusher not configured" },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: "Pusher not configured" }, { status: 503 });
     }
 
-    if (channelName.startsWith("private-notifications-")) {
-      const channelUserId = channelName.replace("private-notifications-", "");
-      if (channelUserId !== user.id) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    } else if (channelName.startsWith("private-focus-")) {
-      const pairId = channelName.replace("private-focus-", "");
-      const pair = await prisma.connectedPair.findUnique({
-        where: { id: pairId },
-        select: { user1Id: true, user2Id: true },
-      });
+    const authResponse = pusher.authorizeChannel(socketId, channel, {
+      user_id: user.id,
+    });
 
-      if (!pair || (pair.user1Id !== user.id && pair.user2Id !== user.id)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    } else if (channelName.startsWith("private-chat-")) {
-      const pairId = channelName.replace("private-chat-", "");
-      const pair = await prisma.connectedPair.findUnique({
-        where: { id: pairId },
-        select: { user1Id: true, user2Id: true },
-      });
-
-      if (!pair || (pair.user1Id !== user.id && pair.user2Id !== user.id)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-    } else {
-      return NextResponse.json({ error: "Invalid channel" }, { status: 400 });
-    }
-
-    const channelAuth = pusher.authorizeChannel(socketId, channelName);
-    return NextResponse.json(channelAuth);
+    return NextResponse.json(authResponse);
   } catch (error) {
     console.error("Pusher auth error:", error);
     return NextResponse.json({ error: "Auth failed" }, { status: 500 });

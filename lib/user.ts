@@ -1,48 +1,32 @@
+import { hash } from "bcryptjs";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 
-export interface ClerkUserPayload {
-  id: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  emailAddresses?: Array<{ emailAddress: string }>;
-  phoneNumbers?: Array<{ phoneNumber: string }>;
+export interface RegisterUserInput {
+  email: string;
+  password: string;
+  name?: string | null;
 }
 
-function buildName(payload: ClerkUserPayload): string | null {
-  const parts = [payload.firstName, payload.lastName].filter(Boolean);
-  if (parts.length > 0) return parts.join(" ");
-  return null;
-}
+export async function registerUser(input: RegisterUserInput) {
+  const email = input.email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    throw new Error("An account with this email already exists");
+  }
 
-function getPrimaryEmail(payload: ClerkUserPayload): string | null {
-  return payload.emailAddresses?.[0]?.emailAddress ?? null;
-}
+  const passwordHash = await hash(input.password, 12);
 
-function getPrimaryPhone(payload: ClerkUserPayload): string | null {
-  return payload.phoneNumbers?.[0]?.phoneNumber ?? null;
-}
-
-export async function syncUserFromClerk(payload: ClerkUserPayload) {
-  const name = buildName(payload);
-  const email = getPrimaryEmail(payload);
-  const phone = getPrimaryPhone(payload);
-
-  const user = await prisma.user.upsert({
-    where: { clerkId: payload.id },
-    create: {
-      clerkId: payload.id,
-      name,
+  const user = await prisma.user.create({
+    data: {
+      clerkId: `na_${randomUUID()}`,
       email,
-      phone,
+      name: input.name?.trim() || null,
+      passwordHash,
       profile: { create: {} },
       onboarding: { create: {} },
       settings: { create: {} },
       individualStreak: { create: {} },
-    },
-    update: {
-      name: name ?? undefined,
-      email: email ?? undefined,
-      phone: phone ?? undefined,
     },
     include: {
       profile: true,
@@ -55,15 +39,15 @@ export async function syncUserFromClerk(payload: ClerkUserPayload) {
   return user;
 }
 
-export async function deleteUserByClerkId(clerkId: string) {
+export async function deleteUserById(userId: string) {
   await prisma.user.delete({
-    where: { clerkId },
+    where: { id: userId },
   });
 }
 
-export async function getUserByClerkId(clerkId: string) {
+export async function getUserById(userId: string) {
   return prisma.user.findUnique({
-    where: { clerkId },
+    where: { id: userId },
     include: {
       profile: true,
       onboarding: true,
@@ -79,9 +63,9 @@ export function isOnboardingComplete(
   return Boolean(onboarding?.completedAt);
 }
 
-export async function getOnboardingStatus(clerkId: string) {
-  let user = await prisma.user.findUnique({
-    where: { clerkId },
+export async function getOnboardingStatus(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
     select: {
       id: true,
       onboarding: {

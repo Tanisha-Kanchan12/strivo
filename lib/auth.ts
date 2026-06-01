@@ -1,7 +1,6 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { syncUserFromClerk } from "@/lib/user";
 
 const userInclude = {
   profile: true,
@@ -11,8 +10,8 @@ const userInclude = {
 } as const;
 
 export async function getAuthUserId(): Promise<string | null> {
-  const { userId } = await auth();
-  return userId;
+  const session = await auth();
+  return session?.user?.id ?? null;
 }
 
 export async function requireAuthUserId(): Promise<string> {
@@ -23,58 +22,34 @@ export async function requireAuthUserId(): Promise<string> {
   return userId;
 }
 
-export async function getDbUserFromClerk() {
-  const { userId } = await auth();
+export async function getDbUser() {
+  const userId = await getAuthUserId();
   if (!userId) return null;
 
   return prisma.user.findUnique({
-    where: { clerkId: userId },
+    where: { id: userId },
     include: userInclude,
   });
 }
 
 export async function requireDbUser() {
-  const { userId } = await auth();
+  const session = await auth();
+  const userId = session?.user?.id;
+
   if (!userId) {
     throw new Error("Unauthorized");
   }
 
-  let user = await prisma.user.findUnique({
-    where: { clerkId: userId },
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
     include: userInclude,
   });
 
   if (!user) {
-    const clerkUser = await currentUser();
-    if (clerkUser) {
-      user = await syncUserFromClerk({
-        id: clerkUser.id,
-        firstName: clerkUser.firstName,
-        lastName: clerkUser.lastName,
-        emailAddresses: clerkUser.emailAddresses.map((e) => ({
-          emailAddress: e.emailAddress,
-        })),
-        phoneNumbers: clerkUser.phoneNumbers.map((p) => ({
-          phoneNumber: p.phoneNumber,
-        })),
-      });
-    } else {
-      user = await prisma.user.create({
-        data: {
-          clerkId: userId,
-          profile: { create: {} },
-          onboarding: { create: {} },
-          settings: { create: {} },
-          individualStreak: { create: {} },
-        },
-        include: userInclude,
-      });
-    }
+    throw new Error("Unauthorized");
   }
 
-  const clerkUser = await currentUser();
-
-  return { clerkUser, user };
+  return { session, user };
 }
 
 export function unauthorizedResponse() {

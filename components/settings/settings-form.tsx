@@ -4,7 +4,7 @@ import type { ProfileVisibility, StudyGoal } from "@prisma/client";
 import { Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useClerk } from "@clerk/nextjs";
+import { signOut } from "next-auth/react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { UploadButton } from "@/lib/uploadthing";
@@ -79,7 +79,6 @@ export function SettingsForm({
   isVerified,
 }: SettingsFormProps) {
   const router = useRouter();
-  const { signOut } = useClerk();
   const [data, setData] = useState(initialData);
   const [blocks, setBlocks] = useState(initialBlocks);
   const [savingKey, setSavingKey] = useState<string | null>(null);
@@ -162,7 +161,7 @@ export function SettingsForm({
     try {
       const res = await fetch("/api/users/me", { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete account");
-      await signOut({ redirectUrl: "/login" });
+      await signOut({ callbackUrl: "/login" });
     } catch {
       toast.error("Failed to delete account");
       setIsDeleting(false);

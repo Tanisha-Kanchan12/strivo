@@ -193,11 +193,12 @@ enum StreakEventType {
 // ─── Core User ───────────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  name      String?
-  email     String?
-  phone     String?
+  id           String   @id @default(cuid())
+  clerkId      String   @unique
+  passwordHash String?
+  name         String?
+  email        String?  @unique
+  phone        String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

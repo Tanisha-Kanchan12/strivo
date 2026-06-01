@@ -1,18 +1,18 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { auth } from "@/auth";
 import { getOnboardingStatus } from "@/lib/user";
 
 export default async function RootPage() {
-  const { userId } = await auth();
+  const session = await auth();
 
-  if (!userId) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
   let onboarding;
   try {
-    onboarding = await getOnboardingStatus(userId);
+    onboarding = await getOnboardingStatus(session.user.id);
   } catch (error) {
     if (isRedirectError(error)) {
       throw error;

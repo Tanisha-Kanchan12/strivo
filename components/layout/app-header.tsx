@@ -1,10 +1,10 @@
 "use client";
 
 import { memo } from "react";
-import { UserButton } from "@clerk/nextjs";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { UserMenu } from "@/components/auth/user-menu";
 import { MainNav } from "@/components/layout/main-nav";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Button } from "@/components/ui/button";
@@ -64,14 +64,7 @@ export const AppHeader = memo(function AppHeader({ className }: AppHeaderProps) 
             <Sparkles className="h-4 w-4" />
           </Button>
           <NotificationBell />
-          <UserButton
-            afterSignOutUrl="/login"
-            appearance={{
-              elements: {
-                avatarBox: "h-9 w-9",
-              },
-            }}
-          />
+          <UserMenu />
         </div>
       </div>
     </header>
