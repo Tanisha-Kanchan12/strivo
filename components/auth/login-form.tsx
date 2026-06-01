@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { AuthDivider } from "@/components/auth/auth-divider";
@@ -22,6 +22,25 @@ export function LoginForm({ googleEnabled = false }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (!error) return;
+
+    if (error === "AccessDenied") {
+      toast.error(
+        "Google sign-in failed. Check that AUTH_SECRET is set and DATABASE_URL uses PostgreSQL on Vercel."
+      );
+      return;
+    }
+    if (error === "Configuration") {
+      toast.error(
+        "Auth is misconfigured. Set AUTH_SECRET, AUTH_URL, and a PostgreSQL DATABASE_URL on Vercel, then redeploy."
+      );
+      return;
+    }
+    toast.error("Sign-in failed. Please try again.");
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

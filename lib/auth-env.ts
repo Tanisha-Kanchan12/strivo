@@ -27,6 +27,16 @@ export function getAuthSecret(): string | undefined {
   return secret || undefined;
 }
 
+export function isProductionWithoutAuthSecret(): boolean {
+  return process.env.NODE_ENV === "production" && !getAuthSecret();
+}
+
+export function isSqliteOnVercel(): boolean {
+  return Boolean(
+    process.env.VERCEL && process.env.DATABASE_URL?.trim().startsWith("file:")
+  );
+}
+
 export function isCanonicalAuthPath(pathname: string): boolean {
   return (
     pathname.startsWith("/api/auth") ||
