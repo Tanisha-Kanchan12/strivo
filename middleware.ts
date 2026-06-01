@@ -1,6 +1,10 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
+import {
+  shouldRedirectToCanonicalAuth,
+  toCanonicalAuthRedirect,
+} from "@/lib/auth-env";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/join"];
 
@@ -21,6 +25,10 @@ function isAuthExemptApi(pathname: string) {
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
+  if (shouldRedirectToCanonicalAuth(req)) {
+    return NextResponse.redirect(toCanonicalAuthRedirect(req));
+  }
+
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth?.user?.id;
 

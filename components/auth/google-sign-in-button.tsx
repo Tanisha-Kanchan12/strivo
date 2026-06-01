@@ -32,6 +32,16 @@ type GoogleSignInButtonProps = {
   label?: string;
 };
 
+function getCanonicalOrigin(): string | undefined {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return undefined;
+  }
+}
+
 export function GoogleSignInButton({
   label = "Continue with Google",
 }: GoogleSignInButtonProps) {
@@ -40,7 +50,16 @@ export function GoogleSignInButton({
   async function handleGoogleSignIn() {
     setLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
+      const origin = getCanonicalOrigin();
+      const callbackUrl = origin ? `${origin}/` : "/";
+
+      if (origin && typeof window !== "undefined" && window.location.origin !== origin) {
+        const params = new URLSearchParams({ callbackUrl });
+        window.location.href = `${origin}/api/auth/signin/google?${params.toString()}`;
+        return;
+      }
+
+      await signIn("google", { callbackUrl });
     } catch {
       toast.error("Could not sign in with Google");
       setLoading(false);

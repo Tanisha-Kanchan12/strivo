@@ -11,8 +11,9 @@ import { findOrCreateOAuthUser } from "@/lib/user";
 const googleProviders: Provider[] = isGoogleAuthConfigured()
   ? [
       Google({
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        clientId: process.env.GOOGLE_CLIENT_ID!.trim(),
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
+        allowDangerousEmailAccountLinking: true,
       }),
     ]
   : [];

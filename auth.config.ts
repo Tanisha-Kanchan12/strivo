@@ -1,6 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
+import { getAuthSecret } from "@/lib/auth-env";
 
 export const authConfig = {
+  // Use request host on Vercel; canonical URL comes from AUTH_URL / NEXTAUTH_URL env.
   trustHost: true,
   pages: {
     signIn: "/login",
@@ -23,5 +25,5 @@ export const authConfig = {
       return session;
     },
   },
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  secret: getAuthSecret(),
 } satisfies NextAuthConfig;
