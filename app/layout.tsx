@@ -39,7 +39,6 @@ export default function RootLayout({
     <ClerkProvider
       appearance={strivoClerkAppearance}
       localization={clerkLocalization}
-      disableKeyless
     >
       <html lang="en">
         <body
@@ -50,7 +49,7 @@ export default function RootLayout({
             position="top-center"
             toastOptions={{
               classNames: {
-                toast: "shadow-card bg-white text-strivo-text",
+                toast: "shadow-card border border-strivo-line bg-white text-strivo-text",
               },
             }}
           />

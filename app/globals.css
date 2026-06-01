@@ -6,30 +6,43 @@
 
 @layer base {
   :root {
-    --background: 90 33% 97%;
-    --foreground: 88 68% 9%;
+    --background: 60 14% 95%;
+    --foreground: 0 0% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 88 68% 9%;
+    --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 88 68% 9%;
+    --popover-foreground: 0 0% 10%;
     --primary: 88 68% 18%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 90 33% 94%;
+    --secondary: 60 10% 93%;
     --secondary-foreground: 88 68% 18%;
-    --muted: 90 33% 94%;
+    --muted: 60 10% 93%;
     --muted-foreground: 95 35% 35%;
     --accent: 45 90% 61%;
-    --accent-foreground: 88 68% 9%;
+    --accent-foreground: 0 0% 10%;
     --destructive: 0 100% 71%;
     --destructive-foreground: 0 0% 100%;
-    --border: 90 33% 94%;
-    --input: 90 33% 94%;
+    --border: 150 9% 87%;
+    --input: 150 9% 87%;
     --ring: 88 68% 18%;
     --radius: 1rem;
   }
 
   body {
     @apply bg-strivo-page text-strivo-text antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  h1 {
+    @apply font-bold tracking-tight text-strivo-text;
+  }
+
+  h2,
+  h3 {
+    @apply font-semibold tracking-tight text-strivo-text;
   }
 }
 
@@ -39,11 +52,15 @@
   }
 
   .surface-card {
-    @apply rounded-2xl bg-white text-strivo-text shadow-card;
+    @apply rounded-2xl border border-strivo-line bg-white text-strivo-text shadow-card;
   }
 
   .surface-card-hover {
-    @apply rounded-2xl bg-white text-strivo-text shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+    @apply rounded-2xl border border-strivo-line bg-white text-strivo-text shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  .section-heading {
+    @apply text-2xl font-bold tracking-tight text-strivo-text;
   }
 
   .chip-active {
@@ -55,7 +72,7 @@
   }
 
   .chip-inactive {
-    @apply bg-strivo-muted text-primary font-medium hover:brightness-[0.98];
+    @apply border border-strivo-line bg-white text-primary font-medium hover:bg-strivo-muted;
   }
 
   .chip-active-dark {
@@ -67,7 +84,7 @@
   }
 
   .focus-cta-card {
-    @apply relative overflow-hidden rounded-2xl bg-white p-6 text-strivo-text shadow-card;
+    @apply relative overflow-hidden rounded-2xl border border-strivo-line bg-white p-6 text-strivo-text shadow-card;
   }
 
   /* Hide Clerk keyless / dev floating badge */

@@ -2,23 +2,23 @@
   "crons": [
     {
       "path": "/api/cron/expire-requests",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/session-reminders",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/expire-live-now",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/ai-nudge",
-      "schedule": "0 9 * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/pair-insights",
-      "schedule": "0 6 * * 1"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/monthly-recap",

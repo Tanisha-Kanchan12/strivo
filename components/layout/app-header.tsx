@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
@@ -14,13 +15,13 @@ interface AppHeaderProps {
   className?: string;
 }
 
-export function AppHeader({ className }: AppHeaderProps) {
+export const AppHeader = memo(function AppHeader({ className }: AppHeaderProps) {
   const openAiBuddy = useAiStore((s) => s.open);
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 bg-white shadow-nav",
+        "sticky top-0 z-50 border-b border-strivo-line bg-white shadow-nav",
         className
       )}
     >
@@ -75,4 +76,4 @@ export function AppHeader({ className }: AppHeaderProps) {
       </div>
     </header>
   );
-}
+});

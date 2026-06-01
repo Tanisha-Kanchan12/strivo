@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, MapPin, Radio, Sparkles } from "lucide-react";
+import { MapPin, Radio, Sparkles } from "lucide-react";
+import { memo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ interface MatchCardProps {
   className?: string;
 }
 
-export function MatchCard({
+export const MatchCard = memo(function MatchCard({
   match,
   onSkip,
   onConnect,
@@ -116,6 +117,7 @@ export function MatchCard({
             className="flex-1"
             onClick={() => onSkip(match.id)}
             disabled={isSkipping || isSent}
+            loading={isSkipping}
           >
             Skip
           </Button>
@@ -123,18 +125,13 @@ export function MatchCard({
             className="flex-1"
             onClick={() => onConnect(match.id)}
             disabled={isConnecting || isSent}
+            loading={isConnecting}
             variant={isSent ? "secondary" : "default"}
           >
-            {isConnecting ? (
-              <Loader2 className="animate-spin" />
-            ) : isSent ? (
-              "Pending"
-            ) : (
-              "Connect"
-            )}
+            {isSent ? "Pending" : "Connect"}
           </Button>
         </div>
       </CardContent>
     </Card>
   );
-}
+});

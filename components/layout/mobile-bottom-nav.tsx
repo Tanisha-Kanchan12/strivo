@@ -47,7 +47,7 @@ export function MobileBottomNav() {
   );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-strivo-border bg-white px-2 pb-3 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-strivo-line bg-white shadow-nav px-2 pb-3 md:hidden">
       <div className="flex items-center justify-around py-2">
         {primaryItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -91,7 +91,7 @@ export function MobileBottomNav() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-xl border border-strivo-border p-4 text-sm font-medium text-strivo-text"
+                    className="flex items-center gap-3 rounded-xl border border-strivo-line p-4 text-sm font-medium text-strivo-text"
                   >
                     <Icon className="h-5 w-5 text-primary" />
                     {item.label}

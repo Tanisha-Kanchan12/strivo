@@ -23,6 +23,9 @@ export function GroupDetailClient({ groupId }: { groupId: string }) {
   } | null>(null);
   const [message, setMessage] = useState("");
   const [target, setTarget] = useState("");
+  const [sending, setSending] = useState(false);
+  const [addingTarget, setAddingTarget] = useState(false);
+  const [startingFocus, setStartingFocus] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/groups/${groupId}`);
@@ -33,40 +36,60 @@ export function GroupDetailClient({ groupId }: { groupId: string }) {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 5000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    }, 5000);
     return () => clearInterval(interval);
   }, [load]);
 
   async function sendMessage() {
-    if (!message.trim()) return;
-    await fetch(`/api/groups/${groupId}/activity`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "message", content: message }),
-    });
-    setMessage("");
-    load();
+    if (!message.trim() || sending) return;
+    setSending(true);
+    try {
+      await fetch(`/api/groups/${groupId}/activity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "message", content: message }),
+      });
+      setMessage("");
+      load();
+    } finally {
+      setSending(false);
+    }
   }
 
   async function addTarget() {
-    if (!target.trim()) return;
-    await fetch(`/api/groups/${groupId}/activity`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "target", task: target }),
-    });
-    setTarget("");
-    load();
+    if (!target.trim() || addingTarget) return;
+    setAddingTarget(true);
+    try {
+      await fetch(`/api/groups/${groupId}/activity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "target", task: target }),
+      });
+      setTarget("");
+      load();
+    } finally {
+      setAddingTarget(false);
+    }
   }
 
   async function startFocus() {
-    await fetch(`/api/groups/${groupId}/focus`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "start", durationMinutes: 25 }),
-    });
-    toast.success("Group focus timer started for all members!");
-    load();
+    if (startingFocus) return;
+    setStartingFocus(true);
+    try {
+      await fetch(`/api/groups/${groupId}/focus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start", durationMinutes: 25 }),
+      });
+      toast.success("Group focus timer started for all members!");
+      load();
+    } finally {
+      setStartingFocus(false);
+    }
   }
 
   if (loading) {
@@ -115,7 +138,7 @@ export function GroupDetailClient({ groupId }: { groupId: string }) {
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               />
-              <Button size="icon" onClick={sendMessage}>
+              <Button size="icon" onClick={sendMessage} loading={sending} disabled={!message.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -152,7 +175,7 @@ export function GroupDetailClient({ groupId }: { groupId: string }) {
               </p>
             ))}
             <Input placeholder="Add target..." value={target} onChange={(e) => setTarget(e.target.value)} />
-            <Button size="sm" variant="secondary" onClick={addTarget}>
+            <Button size="sm" variant="secondary" onClick={addTarget} loading={addingTarget} disabled={!target.trim()}>
               Add target
             </Button>
           </CardContent>
@@ -174,7 +197,7 @@ export function GroupDetailClient({ groupId }: { groupId: string }) {
                   : "soon"}
               </p>
             ) : (
-              <Button onClick={startFocus} className="w-full">
+              <Button onClick={startFocus} className="w-full" loading={startingFocus}>
                 Start synced 25 min focus
               </Button>
             )}

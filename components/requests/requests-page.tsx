@@ -207,22 +207,16 @@ export function RequestsPage() {
                             <Button
                               className="flex-1"
                               onClick={() => handleAccept(req.id)}
-                              disabled={actingId === req.id}
+                              loading={actingId === req.id}
                             >
-                              {actingId === req.id ? (
-                                <Loader2 className="animate-spin" />
-                              ) : (
-                                <>
-                                  <Check className="mr-1 h-4 w-4" />
-                                  Accept
-                                </>
-                              )}
+                              <Check className="mr-1 h-4 w-4" />
+                              Accept
                             </Button>
                             <Button
                               variant="secondary"
                               className="flex-1"
                               onClick={() => handleDecline(req.id)}
-                              disabled={actingId === req.id}
+                              loading={actingId === req.id}
                             >
                               <X className="mr-1 h-4 w-4" />
                               Decline

@@ -10,7 +10,7 @@ import { getInitials } from "@/lib/utils";
 
 function WidgetSkeleton() {
   return (
-    <div className="h-28 animate-pulse rounded-2xl bg-strivo-muted" />
+    <div className="h-28 animate-pulse rounded-2xl border border-strivo-line bg-white shadow-card" />
   );
 }
 
@@ -103,7 +103,7 @@ export function HomeWidgetsSidebar() {
               <span className="text-xs font-semibold text-primary">{c.matchScore}%</span>
             </div>
           ))}
-          <Button variant="secondary" size="sm" className="w-full gap-1" asChild>
+          <Button size="sm" className="w-full gap-1" asChild>
             <Link href="/home">
               <UserPlus className="h-3.5 w-3.5" />
               See more on Discover

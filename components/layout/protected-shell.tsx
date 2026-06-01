@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import { AiStudyBuddyModal } from "@/components/ai/ai-study-buddy-modal";
 import { AppHeader } from "@/components/layout/app-header";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -57,7 +57,7 @@ export function ProtectedShell({ children }: { children: React.ReactNode }) {
       <NotificationsProvider />
       <div className="app-shell-bg">
         <AppHeader />
-        <main className="relative mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 md:pb-8">
+        <main className="relative mx-auto max-w-7xl animate-fade-in px-4 py-8 pb-24 sm:px-6 md:pb-8">
           {children}
         </main>
         <MobileBottomNav />

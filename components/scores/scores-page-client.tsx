@@ -204,7 +204,7 @@ export function ScoresPageClient() {
             <p className="text-sm text-strivo-secondary">No scores logged yet.</p>
           )}
           {scores.map((s) => (
-            <div key={s.id} className="flex items-center justify-between rounded-lg border border-strivo-border p-3">
+            <div key={s.id} className="flex items-center justify-between rounded-lg border border-strivo-line p-3">
               <div>
                 <p className="font-medium text-sm">{s.testName}</p>
                 <p className="text-xs text-strivo-secondary">

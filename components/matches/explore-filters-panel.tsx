@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ interface ExploreFiltersPanelProps {
   onClose: () => void;
 }
 
-export function ExploreFiltersPanel({
+export const ExploreFiltersPanel = memo(function ExploreFiltersPanel({
   allFilters,
   customFilters,
   activeFilter,
@@ -75,8 +75,8 @@ export function ExploreFiltersPanel({
   }
 
   return (
-    <div className="surface-card overflow-hidden rounded-2xl border border-strivo-border">
-      <div className="border-b border-strivo-border p-4">
+    <div className="surface-card overflow-hidden rounded-2xl border border-strivo-line">
+      <div className="border-b border-strivo-line p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-strivo-secondary" />
           <Input
@@ -94,7 +94,7 @@ export function ExploreFiltersPanel({
           <label
             key={chip.id}
             className={cn(
-              "flex cursor-pointer items-center gap-3 border-b border-strivo-border px-4 py-3 transition-colors hover:bg-strivo-muted",
+              "flex cursor-pointer items-center gap-3 border-b border-strivo-line px-4 py-3 transition-colors hover:bg-strivo-muted",
               activeFilter === chip.id && "bg-blue-50"
             )}
           >
@@ -115,12 +115,13 @@ export function ExploreFiltersPanel({
         ))}
 
         {query.trim() && !exactMatch && (
-          <div className="border-t border-strivo-border p-4">
+          <div className="border-t border-strivo-line p-4">
             <Button
               type="button"
               variant="secondary"
               className="w-full gap-2"
               onClick={addCustomFilter}
+              loading={adding}
               disabled={adding}
             >
               <Plus className="h-4 w-4" />
@@ -137,4 +138,4 @@ export function ExploreFiltersPanel({
       </div>
     </div>
   );
-}
+});

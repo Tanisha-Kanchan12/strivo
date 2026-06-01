@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FeedSidebarLeft } from "@/components/feed/feed-sidebar-left";
@@ -23,8 +24,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadButton } from "@/lib/uploadthing";
 import { getInitials } from "@/lib/utils";
+
+const UploadButton = dynamic(
+  () => import("@/lib/uploadthing").then((mod) => mod.UploadButton),
+  {
+    ssr: false,
+    loading: () => (
+      <Button type="button" size="sm" variant="outline" disabled>
+        Image / PDF
+      </Button>
+    ),
+  }
+);
 
 type PostType = "ACHIEVEMENT" | "DOUBT" | "KNOWLEDGE";
 
@@ -76,6 +88,9 @@ export function FeedPageClient() {
     previewImage: null,
   });
   const [uploading, setUploading] = useState(false);
+  const [likingId, setLikingId] = useState<string | null>(null);
+  const [commentingId, setCommentingId] = useState<string | null>(null);
+  const [loadingCommentsId, setLoadingCommentsId] = useState<string | null>(null);
 
   function clearMedia() {
     setMedia({
@@ -86,15 +101,16 @@ export function FeedPageClient() {
     });
   }
 
-  const loadPosts = useCallback(async () => {
+  const loadPosts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch("/api/feed");
+      const res = await fetch("/api/feed", { signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setPosts(data.posts ?? []);
-    } catch {
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
       setError(true);
     } finally {
       setLoading(false);
@@ -102,7 +118,9 @@ export function FeedPageClient() {
   }, []);
 
   useEffect(() => {
-    loadPosts();
+    const controller = new AbortController();
+    loadPosts(controller.signal);
+    return () => controller.abort();
   }, [loadPosts]);
 
   async function handlePost() {
@@ -137,16 +155,22 @@ export function FeedPageClient() {
   }
 
   async function toggleLike(postId: string) {
-    const res = await fetch(`/api/feed/${postId}/like`, { method: "POST" });
-    const data = await res.json();
-    if (res.ok) {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, likedByMe: data.liked, likeCount: data.likeCount }
-            : p
-        )
-      );
+    if (likingId) return;
+    setLikingId(postId);
+    try {
+      const res = await fetch(`/api/feed/${postId}/like`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? { ...p, likedByMe: data.liked, likeCount: data.likeCount }
+              : p
+          )
+        );
+      }
+    } finally {
+      setLikingId(null);
     }
   }
 
@@ -156,31 +180,41 @@ export function FeedPageClient() {
       return;
     }
     setExpandedComments(postId);
-    const res = await fetch(`/api/feed/${postId}/comments`);
-    const data = await res.json();
-    setComments((prev) => ({ ...prev, [postId]: data.comments ?? [] }));
+    setLoadingCommentsId(postId);
+    try {
+      const res = await fetch(`/api/feed/${postId}/comments`);
+      const data = await res.json();
+      setComments((prev) => ({ ...prev, [postId]: data.comments ?? [] }));
+    } finally {
+      setLoadingCommentsId(null);
+    }
   }
 
   async function submitComment(postId: string) {
     const text = commentText[postId]?.trim();
-    if (!text) return;
-    const res = await fetch(`/api/feed/${postId}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: text }),
-    });
-    if (res.ok) {
-      setCommentText((prev) => ({ ...prev, [postId]: "" }));
-      const data = await res.json();
-      setComments((prev) => ({
-        ...prev,
-        [postId]: [...(prev[postId] ?? []), data.comment],
-      }));
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p
-        )
-      );
+    if (!text || commentingId) return;
+    setCommentingId(postId);
+    try {
+      const res = await fetch(`/api/feed/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text }),
+      });
+      if (res.ok) {
+        setCommentText((prev) => ({ ...prev, [postId]: "" }));
+        const data = await res.json();
+        setComments((prev) => ({
+          ...prev,
+          [postId]: [...(prev[postId] ?? []), data.comment],
+        }));
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p
+          )
+        );
+      }
+    } finally {
+      setCommentingId(null);
     }
   }
 
@@ -206,7 +240,7 @@ export function FeedPageClient() {
                     className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
                       postType === type
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-strivo-border text-strivo-secondary"
+                        : "border-strivo-line text-strivo-secondary"
                     }`}
                   >
                     <Icon className={`h-3.5 w-3.5 ${meta.color}`} />
@@ -228,7 +262,7 @@ export function FeedPageClient() {
                   alt="Upload preview"
                   width={320}
                   height={200}
-                  className="max-h-48 rounded-lg border border-strivo-border object-cover"
+                  className="max-h-48 rounded-lg border border-strivo-line object-cover"
                 />
                 <button
                   type="button"
@@ -241,7 +275,7 @@ export function FeedPageClient() {
               </div>
             )}
             {media.pdfUrl && (
-              <div className="flex items-center justify-between rounded-lg border border-strivo-border bg-strivo-muted px-3 py-2 text-sm">
+              <div className="flex items-center justify-between rounded-lg border border-strivo-line bg-strivo-muted px-3 py-2 text-sm">
                 <span className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary" />
                   {media.pdfFileName ?? "Attached PDF"}
@@ -256,7 +290,7 @@ export function FeedPageClient() {
                 endpoint="feedMedia"
                 appearance={{
                   button:
-                    "ut-ready:bg-strivo-muted ut-ready:text-strivo-text text-xs font-medium px-3 py-2 rounded-lg border border-strivo-border bg-white",
+                    "ut-ready:bg-strivo-muted ut-ready:text-strivo-text text-xs font-medium px-3 py-2 rounded-lg border border-strivo-line bg-white",
                   allowedContent: "hidden",
                 }}
                 content={{
@@ -300,10 +334,11 @@ export function FeedPageClient() {
             </div>
             <Button
               onClick={handlePost}
+              loading={posting}
               disabled={posting || uploading}
               className="gap-2"
             >
-              {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              <Send className="h-4 w-4" />
               Publish
             </Button>
           </CardContent>
@@ -318,7 +353,7 @@ export function FeedPageClient() {
           <Card className="surface-card">
             <CardContent className="p-6 text-center text-sm text-strivo-secondary">
               Failed to load feed.{" "}
-              <button type="button" className="text-primary underline" onClick={loadPosts}>
+              <button type="button" className="text-primary underline" onClick={() => loadPosts()}>
                 Retry
               </button>
             </CardContent>
@@ -360,7 +395,7 @@ export function FeedPageClient() {
                         {post.content}
                       </p>
                       {post.imageUrl && (
-                        <div className="mt-3 overflow-hidden rounded-lg border border-strivo-border">
+                        <div className="mt-3 overflow-hidden rounded-lg border border-strivo-line">
                           <Image
                             src={post.imageUrl}
                             alt="Post attachment"
@@ -375,7 +410,7 @@ export function FeedPageClient() {
                           href={post.pdfUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-3 flex items-center gap-3 rounded-lg border border-strivo-border bg-strivo-muted p-3 transition-colors hover:bg-strivo-muted/80"
+                          className="mt-3 flex items-center gap-3 rounded-lg border border-strivo-line bg-strivo-muted p-3 transition-colors hover:bg-strivo-muted/80"
                         >
                           <FileText className="h-8 w-8 shrink-0 text-primary" />
                           <div className="min-w-0">
@@ -392,24 +427,34 @@ export function FeedPageClient() {
                         <button
                           type="button"
                           onClick={() => toggleLike(post.id)}
+                          disabled={likingId === post.id}
                           className={`flex items-center gap-1.5 text-sm ${
                             post.likedByMe ? "text-primary font-medium" : "text-strivo-secondary"
                           }`}
                         >
-                          <Heart className={`h-4 w-4 ${post.likedByMe ? "fill-current" : ""}`} />
+                          {likingId === post.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Heart className={`h-4 w-4 ${post.likedByMe ? "fill-current" : ""}`} />
+                          )}
                           {post.likeCount}
                         </button>
                         <button
                           type="button"
                           onClick={() => loadComments(post.id)}
+                          disabled={loadingCommentsId === post.id}
                           className="flex items-center gap-1.5 text-sm text-strivo-secondary"
                         >
-                          <MessageCircle className="h-4 w-4" />
+                          {loadingCommentsId === post.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <MessageCircle className="h-4 w-4" />
+                          )}
                           {post.commentCount}
                         </button>
                       </div>
                       {expandedComments === post.id && (
-                        <div className="mt-4 space-y-3 border-t border-strivo-border pt-4">
+                        <div className="mt-4 space-y-3 border-t border-strivo-line pt-4">
                           {(comments[post.id] as { id: string; content: string; author: { name: string | null } }[] | undefined)?.map((c) => (
                             <div key={c.id} className="text-sm">
                               <span className="font-medium">{c.author.name ?? "Student"}</span>
@@ -419,7 +464,7 @@ export function FeedPageClient() {
                           ))}
                           <div className="flex gap-2">
                             <input
-                              className="flex-1 rounded-lg border border-strivo-border px-3 py-2 text-sm"
+                              className="flex-1 rounded-lg border border-strivo-line px-3 py-2 text-sm"
                               placeholder="Add a comment..."
                               value={commentText[post.id] ?? ""}
                               onChange={(e) =>
@@ -429,7 +474,11 @@ export function FeedPageClient() {
                                 }))
                               }
                             />
-                            <Button size="sm" onClick={() => submitComment(post.id)}>
+                            <Button
+                              size="sm"
+                              onClick={() => submitComment(post.id)}
+                              loading={commentingId === post.id}
+                            >
                               Post
                             </Button>
                           </div>

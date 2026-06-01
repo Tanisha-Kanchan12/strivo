@@ -58,6 +58,8 @@ export function PlannerPageClient() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editTaskText, setEditTaskText] = useState("");
   const [savingPlan, setSavingPlan] = useState(false);
+  const [actingTaskId, setActingTaskId] = useState<string | null>(null);
+  const [savingTaskEdit, setSavingTaskEdit] = useState(false);
   const [form, setForm] = useState({
     examName: "",
     examDate: "",
@@ -194,23 +196,34 @@ export function PlannerPageClient() {
   }
 
   async function taskAction(id: string, action: "complete" | "skip") {
-    await fetch(`/api/planner/tasks/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
-    });
-    load();
+    if (actingTaskId) return;
+    setActingTaskId(id);
+    try {
+      await fetch(`/api/planner/tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      load();
+    } finally {
+      setActingTaskId(null);
+    }
   }
 
   async function saveTaskEdit() {
-    if (!editingTaskId || editTaskText.trim().length < 2) return;
-    await fetch(`/api/planner/tasks/${editingTaskId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "edit", taskText: editTaskText }),
-    });
-    setEditingTaskId(null);
-    load();
+    if (!editingTaskId || editTaskText.trim().length < 2 || savingTaskEdit) return;
+    setSavingTaskEdit(true);
+    try {
+      await fetch(`/api/planner/tasks/${editingTaskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "edit", taskText: editTaskText }),
+      });
+      setEditingTaskId(null);
+      load();
+    } finally {
+      setSavingTaskEdit(false);
+    }
   }
 
   function TaskRow({ task, highlight }: { task: PlanTask; highlight?: boolean }) {
@@ -218,7 +231,7 @@ export function PlannerPageClient() {
       <div
         className={cn(
           "flex items-start justify-between gap-3 rounded-lg border p-3",
-          highlight ? "border-[#3B82F6] bg-blue-50/50" : "border-strivo-border",
+          highlight ? "border-[#3B82F6] bg-blue-50/50" : "border-strivo-line",
           task.isComplete && "opacity-60"
         )}
       >
@@ -257,11 +270,16 @@ export function PlannerPageClient() {
                 size="sm"
                 variant="secondary"
                 onClick={() => taskAction(task.id, "skip")}
+                loading={actingTaskId === task.id}
                 aria-label="Skip task"
               >
                 <SkipForward className="h-3.5 w-3.5" />
               </Button>
-              <Button size="sm" onClick={() => taskAction(task.id, "complete")}>
+              <Button
+                size="sm"
+                onClick={() => taskAction(task.id, "complete")}
+                loading={actingTaskId === task.id}
+              >
                 <Check className="h-3.5 w-3.5" />
               </Button>
             </>
@@ -469,7 +487,7 @@ export function PlannerPageClient() {
               value={editTaskText}
               onChange={(e) => setEditTaskText(e.target.value)}
             />
-            <Button onClick={saveTaskEdit} className="w-full">
+            <Button onClick={saveTaskEdit} className="w-full" loading={savingTaskEdit}>
               Save
             </Button>
           </div>

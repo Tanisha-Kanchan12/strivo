@@ -1,5 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
@@ -9,13 +10,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-full bg-primary text-white hover:bg-primary-mid active:scale-[0.98]",
+          "rounded-full bg-primary text-white shadow-sm hover:bg-primary-mid active:scale-[0.98]",
         destructive:
           "rounded-full bg-strivo-coral text-white shadow-sm hover:brightness-105",
         outline:
-          "rounded-full bg-strivo-muted text-primary hover:brightness-[0.98]",
+          "rounded-full border border-strivo-line bg-white text-strivo-text hover:bg-strivo-muted",
         secondary:
-          "rounded-full bg-strivo-muted text-primary hover:brightness-[0.98]",
+          "rounded-full border border-strivo-line bg-white text-primary font-semibold hover:bg-strivo-muted",
         ghost:
           "rounded-full text-strivo-secondary hover:bg-strivo-muted hover:text-primary",
         link: "text-primary underline-offset-4 hover:text-primary-mid hover:underline",
@@ -40,17 +41,22 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
         {...props}
-      />
+      >
+        {loading ? <Loader2 className="animate-spin" /> : children}
+      </Comp>
     );
   }
 );

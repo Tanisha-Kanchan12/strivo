@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import type { FilterChipData } from "@/types/matching";
 
@@ -9,7 +10,7 @@ interface FilterChipsProps {
   onFilterChange: (filterId: string) => void;
 }
 
-export function FilterChips({
+export const FilterChips = memo(function FilterChips({
   chips,
   activeFilter,
   onFilterChange,
@@ -31,4 +32,4 @@ export function FilterChips({
       ))}
     </>
   );
-}
+});

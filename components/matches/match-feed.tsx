@@ -1,7 +1,7 @@
 "use client";
 
 import { LayoutGrid, Loader2, Users } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, memo } from "react";
 import { toast } from "sonner";
 import { ExploreFiltersPanel } from "@/components/matches/explore-filters-panel";
 import { FilterChips } from "@/components/matches/filter-chips";
@@ -19,7 +19,7 @@ interface MatchFeedProps {
   currentUserId: string;
 }
 
-export function MatchFeed({
+export const MatchFeed = memo(function MatchFeed({
   initialRecommendedChips,
   initialAllFilters,
   currentUserId,
@@ -43,15 +43,16 @@ export function MatchFeed({
       .catch(() => setCustomFilters([]));
   }, []);
 
-  const fetchMatches = useCallback(async (filter: string) => {
+  const fetchMatches = useCallback(async (filter: string, signal?: AbortSignal) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({ filter });
-      const res = await fetch(`/api/matches?${params}`);
+      const res = await fetch(`/api/matches?${params}`, { signal });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load matches");
       setMatches(data.matches);
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
       toast.error(
         error instanceof Error ? error.message : "Failed to load matches"
       );
@@ -63,10 +64,12 @@ export function MatchFeed({
 
   useEffect(() => {
     if (activeFilter === "HACKATHON") return;
-    fetchMatches(activeFilter);
+    const controller = new AbortController();
+    fetchMatches(activeFilter, controller.signal);
+    return () => controller.abort();
   }, [activeFilter, fetchMatches]);
 
-  async function handleSkip(id: string) {
+  const handleSkip = useCallback(async (id: string) => {
     setSkippingId(id);
     try {
       const res = await fetch("/api/matches/skip", {
@@ -83,9 +86,9 @@ export function MatchFeed({
       toast.error("Could not skip this match");
       setSkippingId(null);
     }
-  }
+  }, []);
 
-  async function handleConnect(id: string) {
+  const handleConnect = useCallback(async (id: string) => {
     setConnectingId(id);
     try {
       const res = await fetch("/api/matches/connect", {
@@ -116,12 +119,12 @@ export function MatchFeed({
     } finally {
       setConnectingId(null);
     }
-  }
+  }, [previewMatch?.id]);
 
-  function handleOpen(match: MatchCandidate) {
+  const handleOpen = useCallback((match: MatchCandidate) => {
     setPreviewMatch(match);
     setPreviewOpen(true);
-  }
+  }, []);
 
   const showExploreActive =
     activeFilter !== "ALL" &&
@@ -234,4 +237,4 @@ export function MatchFeed({
       />
     </div>
   );
-}
+});

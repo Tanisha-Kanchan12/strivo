@@ -361,7 +361,7 @@ export function OnboardingWizard({
                 )}
               </div>
 
-              <div className="space-y-3 rounded-xl border border-strivo-border p-4">
+              <div className="space-y-3 rounded-xl border border-strivo-line p-4">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="mentor-mode">I want to be a Mentor</Label>
                   <Switch

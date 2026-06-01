@@ -212,7 +212,7 @@ export function SyllabusPageClient() {
                 </div>
               </button>
               {open && (
-                <CardContent className="space-y-2 border-t border-strivo-border p-3 pt-2">
+                <CardContent className="space-y-2 border-t border-strivo-line p-3 pt-2">
                   {subjectTopics.length === 0 && (
                     <p className="px-2 py-2 text-sm text-strivo-secondary">
                       No topics yet. Add your own below.
@@ -234,7 +234,7 @@ export function SyllabusPageClient() {
                             "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
                             t.isComplete
                               ? "border-primary bg-primary text-white"
-                              : "border-strivo-border"
+                              : "border-strivo-line"
                           )}
                         >
                           {t.isComplete && <Check className="h-3 w-3" />}

@@ -3,6 +3,7 @@
 import { BookOpen, Calendar, Focus, Home, LineChart, Newspaper, Settings, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { memo } from "react";
 import { RequestsNavLink } from "@/components/layout/requests-nav-link";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function MainNav() {
+export const MainNav = memo(function MainNav() {
   const pathname = usePathname();
 
   return (
@@ -50,4 +51,4 @@ export function MainNav() {
       />
     </nav>
   );
-}
+});

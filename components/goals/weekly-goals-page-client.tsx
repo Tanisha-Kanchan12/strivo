@@ -90,12 +90,12 @@ export function WeeklyGoalsPageClient() {
               key={g.id}
               type="button"
               onClick={() => toggleGoal(g.id)}
-              className="flex w-full items-center gap-3 rounded-lg border border-strivo-border p-3 text-left text-sm"
+              className="flex w-full items-center gap-3 rounded-lg border border-strivo-line p-3 text-left text-sm"
             >
               <span
                 className={cn(
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                  g.isComplete ? "border-primary bg-primary text-white" : "border-strivo-border"
+                  g.isComplete ? "border-primary bg-primary text-white" : "border-strivo-line"
                 )}
               >
                 {g.isComplete && <Check className="h-3 w-3" />}

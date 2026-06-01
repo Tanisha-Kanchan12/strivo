@@ -38,7 +38,7 @@ export function FeedSidebarRight() {
             <span className="text-xs font-semibold text-primary">{c.matchScore}%</span>
           </div>
         ))}
-        <Button variant="secondary" size="sm" className="w-full gap-1" asChild>
+        <Button size="sm" className="w-full gap-1" asChild>
           <Link href="/home">
             <UserPlus className="h-3.5 w-3.5" />
             Discover more
